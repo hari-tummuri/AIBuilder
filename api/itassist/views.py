@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework import status
 from itassist.services import conversation
-from .sync_utils import sync_json_to_mysql
+from .utils.sync_utils import sync_json_to_mysql
 from core.settings import CONV_JSON_FILE
 
 # Create your views here.
