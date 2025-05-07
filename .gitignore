@@ -2,3 +2,6 @@ venv
 /venv
 
 offline.sqlite3
+ngrok*
+
+test_api*
