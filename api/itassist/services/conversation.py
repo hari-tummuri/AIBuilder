@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from rest_framework import status
 from core.settings import CONV_JSON_FILE
+from .answer import modelResponse
 
 
 # JSON_FILE = r"./userdata/conversations.json"
@@ -129,7 +130,16 @@ def add_user_message(conv_id, message_text):
             with open(CONV_JSON_FILE, "w") as file:
                 json.dump(conversations, file, indent=4)
 
-            return new_message, status.HTTP_201_CREATED
+            # Add static system message using your existing helper
+            add_system_message(conv_id, modelResponse(message_text))
+
+            # Reload conversation to include both messages before returning
+            with open(CONV_JSON_FILE, "r") as file:
+                updated_conversations = json.load(file)
+
+            # Return the updated conversation object
+            updated_conv = next((c for c in updated_conversations if c["conv_id"] == conv_id), None)
+            return updated_conv, status.HTTP_201_CREATED
 
     return {"error": "Conversation not found."}, status.HTTP_404_NOT_FOUND
 
@@ -148,11 +158,13 @@ def add_system_message(conv_id, message_text):
             if not message_text:
                 return {"error": "Message content is required."}, status.HTTP_404_NOT_FOUND
 
-            existing_ids = [msg.get("id", 0) for msg in conv["messages"]]
-            next_id = max(existing_ids, default=0) + 1
+            #Use string-based IDs like "conv_id-1", "conv_id-2" instead of just integers
+            existing_ids = [msg.get("id", "") for msg in conv["messages"] if isinstance(msg.get("id", ""), str)]
+            numbers = [int(msg_id.split("-")[-1]) for msg_id in existing_ids if msg_id.startswith(conv_id + "-")]
+            next_num = max(numbers, default=0) + 1
 
             new_message = {
-                "id": next_id,
+                "id": f"{conv_id}-{next_num}",
                 "from_field": "System",
                 "message": message_text,
                 "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
