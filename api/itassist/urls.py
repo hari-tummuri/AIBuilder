@@ -9,4 +9,7 @@ urlpatterns = [
     path("add_message/<str:conv_id>/", views.add_user_message_to_conversation),
     path("conversation/<str:conv_id>/", views.get_conversation_detail_view),
     path("sync/", views.sync_data_sql_server),
+    #path for list_files view
+    path("list_files/", views.list_files),
+    path("download_file/", views.download_file),
 ]

@@ -8,7 +8,8 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from itassist.services import conversation
 from .utils.sync_utils import sync_json_to_mysql
-from core.settings import CONV_JSON_FILE
+from core.settings import CONV_JSON_FILE, DOCUMENT_ROOT
+from django.http import FileResponse
 
 # Create your views here.
 
@@ -95,6 +96,9 @@ def get_conversation_detail_view(request, conv_id):
     result, status_code = conversation.get_conversation_by_id(conv_id)
     return Response(result, status=status_code)
 
+
+# This function synchronizes data from a SQL Server database to a MySQL database.
+# It uses the sync_json_to_mysql function from the sync_utils module to perform the synchronization.
 @api_view(["GET"])
 def sync_data_sql_server(request):
     try:
@@ -102,3 +106,26 @@ def sync_data_sql_server(request):
         return Response({"message": "Data synced successfully."}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(["GET"])
+def list_files(request):
+    file_list = []
+    for root, dirs, files in os.walk(DOCUMENT_ROOT):
+        for file in files:
+            rel_path = os.path.relpath(os.path.join(root, file), start=DOCUMENT_ROOT)
+            file_list.append(os.path.join(DOCUMENT_ROOT, rel_path).replace("\\", "/"))  # Normalize Windows paths
+    return Response({"files": file_list})
+
+
+@api_view(["GET"])
+def download_file(request):
+    filepath = request.GET.get("filepath")
+    if not filepath:
+        return Response({"error": "Filepath is required."}, status=400)
+
+    full_path = os.path.abspath(filepath)
+
+    if not os.path.exists(full_path) or not os.path.isfile(full_path):
+        return Response({"error": "File not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    return FileResponse(open(full_path, 'rb'), as_attachment=True, filename=os.path.basename(full_path))

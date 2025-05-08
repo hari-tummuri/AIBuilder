@@ -144,3 +144,4 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CONV_JSON_FILE = r"./userdata/conversations.json"
+DOCUMENT_ROOT = r"./userdata/Documents"
